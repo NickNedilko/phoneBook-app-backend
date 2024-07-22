@@ -19,6 +19,11 @@ const contactSchema = new Schema({
         type: String, 
             required: true,
             match: /\(?([0-9]{3})\)?([ .-]?)([0-9]{3})\2([0-9]{4})/
+    },
+    owner: {
+        type: Schema.Types.ObjectId,
+        ref: "user",
+        required: true
     }
     
 
