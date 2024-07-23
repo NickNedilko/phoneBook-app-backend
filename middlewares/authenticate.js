@@ -1,4 +1,4 @@
-const { HttpError, verifyToken } = require("../utils");
+const { HttpError, verifyToken } = require("../Utils");
 const { User } = require('../models/user');
 
 const authenticate = async (req, res, next) => {

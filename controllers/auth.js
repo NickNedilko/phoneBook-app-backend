@@ -1,10 +1,10 @@
-const { User } = require('../models/user');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const gravatar = require('gravatar');
 const fs = require('fs/promises')
+const { User } = require('../models/user');
 
-const { HttpError, ctrlWrapper, createToken } = require('../utils');
+const { HttpError, ctrlWrapper, createToken } = require('../Utils');
 
 
 const avatarsDir = path.join(__dirname, '../', 'public', 'avatars' )
