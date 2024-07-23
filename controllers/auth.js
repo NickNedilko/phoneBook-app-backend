@@ -1,10 +1,13 @@
 const { User } = require('../models/user');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken')
+const path = require('path');
+const gravatar = require('gravatar');
+const fs = require('fs/promises')
 
-const { HttpError, ctrlWrapper } = require('../utils')
+const { HttpError, ctrlWrapper, createToken } = require('../utils');
 
-const { SECRET_KEY_TOKEN } = process.env;
+
+const avatarsDir = path.join(__dirname, '../', 'public', 'avatars' )
 
 const register = async (req, res) => {
     const { email, password } = req.body;
@@ -13,7 +16,10 @@ const register = async (req, res) => {
         throw HttpError(409, "email is already in use")
     }
     const hashPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({...req.body, password: hashPassword});
+    const avatarUrl = gravatar.url(email);
+
+
+    const newUser = await User.create({...req.body, password: hashPassword, avatarUrl});
     res.status(201).json({
         name: newUser.name,
         email: newUser.email
@@ -24,7 +30,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    console.log(user)
+   
     if (!user) {
         throw HttpError(401, "Email or password is invalid")
     }
@@ -36,7 +42,8 @@ const login = async (req, res) => {
     const payload = {
         id: user.id
     }
-    const token = jwt.sign(payload, SECRET_KEY_TOKEN, {expiresIn: "23h"})
+    const token = createToken(payload);
+    
 
     await User.findByIdAndUpdate(user._id, {token});
     res.json({
@@ -64,9 +71,26 @@ const logout = async (req, res) => {
     })
 }
 
+  
+const updateAvatar = async (req, res) => {
+    const {_id} = req.user
+    const { path: tempUpload, originalname } = req.file;
+    const filename = `${_id}_${originalname}`
+    const resultUpload = path.join(avatarsDir, filename);
+    await fs.rename(tempUpload, resultUpload);
+    const avatarUrl = path.join('avatars', filename);
+    await User.findByIdAndUpdate(_id, { avatarUrl });
+
+    res.json({
+        avatarUrl
+    })
+    
+}
+
 module.exports = {
     register: ctrlWrapper(register),
     login: ctrlWrapper(login),
     currentUser: ctrlWrapper(currentUser),
-    logout: ctrlWrapper(logout)
+    logout: ctrlWrapper(logout),
+    updateAvatar: ctrlWrapper(updateAvatar)
 }
