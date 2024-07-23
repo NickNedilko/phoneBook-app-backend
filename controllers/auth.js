@@ -4,7 +4,7 @@ const gravatar = require('gravatar');
 const fs = require('fs/promises')
 const { User } = require('../models/user');
 
-const { HttpError, ctrlWrapper, createToken } = require('../Utils');
+const { HttpError, ctrlWrapper, createToken } = require('../helpers');
 
 
 const avatarsDir = path.join(__dirname, '../', 'public', 'avatars' )
