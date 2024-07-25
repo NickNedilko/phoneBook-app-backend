@@ -8,8 +8,9 @@ const authenticate = async (req, res, next) => {
         next(HttpError(401))
     }
 try {
-    const { id } = verifyToken(token);
-    const user = await User.findById(id);
+    const {payload} = verifyToken(token);
+    const user = await User.findById(payload.id);
+    console.log(user)
     if (!user || !user.token || user.token !== token) {
         next(HttpError(401, "User not found"))
     }
