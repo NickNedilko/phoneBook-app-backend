@@ -17,12 +17,21 @@ const register = async (req, res) => {
     }
     const hashPassword = await bcrypt.hash(password, 10);
     const avatarUrl = gravatar.url(email);
+    
 
-
-    const newUser = await User.create({...req.body, password: hashPassword, avatarUrl});
+    const newUser = await User.create({ ...req.body, password: hashPassword, avatarUrl });
+    
+    const signUpUser = await User.findOne({ email });
+    const payload = {
+        id: signUpUser.id
+    }
+    const token = createToken(payload);
     res.status(201).json({
-        name: newUser.name,
-        email: newUser.email
+        token,
+        user: {name: newUser.name,
+              email: newUser.email,
+              avatarUrl
+        }
     })
     
 }
@@ -47,9 +56,11 @@ const login = async (req, res) => {
 
     await User.findByIdAndUpdate(user._id, {token});
     res.json({
-        name: user.name,
-        email: user.email,
-        token
+        token,
+        user: {
+            name: user.name,
+            email: user.email,
+        }
     })
 
 } 
