@@ -28,7 +28,9 @@ const register = async (req, res) => {
     await User.findByIdAndUpdate(signUpUser.id, {token});
     res.status(201).json({
         token,
-        user: {name: newUser.name,
+        user: {
+              id: signUpUser.id,
+              name: newUser.name,
               email: newUser.email,
               avatarUrl
         }
@@ -58,6 +60,7 @@ const login = async (req, res) => {
     res.json({
         token,
         user: {
+            id: user.id,
             name: user.name,
             email: user.email,
             avatarUrl: user.avatarUrl
@@ -67,17 +70,19 @@ const login = async (req, res) => {
 } 
 
 const currentUser = async (req, res) => {
-    const {email, name} = req.user;
+    const {email, name, avatarUrl, id} = req.user;
 
     res.json({
+        id,
         name, 
-        email
+        email,
+        avatarUrl
     })
 }
 
 const logout = async (req, res) => {
     const { _id } = req.user;
-    await User.findByIdAndUpdate(_id, { token: '' });
+    await User.findByIdAndUpdate(_id, {token: '' });
     res.json({
         message: 'Logout succes'
     })
