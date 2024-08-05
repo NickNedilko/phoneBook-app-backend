@@ -1,5 +1,6 @@
 
 const { Schema, model } = require('mongoose');
+const crypto = require('crypto');
 const { handleMongooseError } = require('../helpers');
 const Joi = require('joi');
 
@@ -10,6 +11,9 @@ const contactSchema = new Schema({
     name: {
         type: String, 
         required: true
+    },
+    avatar: {
+        type: String
     },
     email:  {
         type: String, 
@@ -35,8 +39,16 @@ const contactSchema = new Schema({
     timestamps: true
 } )
 
+contactSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        const emailHash = crypto.createHash('md5').update(this.email).digest('hex');
+        this.avatar = `https://www.gravatar.com/avatar/${emailHash}?d=monsterid`
+    }
+    next();
+})
+
 const addContactSchema = Joi.object({
-    name: Joi.string().min(8).required(),
+    name: Joi.string().min(5).required(),
     email: Joi.string().pattern(emailRegex).required(),
     phone: Joi.string().pattern(phoneRegex).required(),
 })

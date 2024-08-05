@@ -1,10 +1,10 @@
 const bcrypt = require('bcrypt');
 const path = require('path');
-const gravatar = require('gravatar');
 const fs = require('fs/promises')
 const { User } = require('../models/user');
 
 const { HttpError, ctrlWrapper, createToken } = require('../helpers');
+const ImageService = require('../services/imageService');
 
 
 const avatarsDir = path.join(__dirname, '../', 'public', 'avatars' )
@@ -16,9 +16,8 @@ const register = async (req, res) => {
         throw HttpError(409, "email is already in use")
     }
     const hashPassword = await bcrypt.hash(password, 10);
-    const avatarUrl = gravatar.url(email);
-
-    const newUser = await User.create({ ...req.body, password: hashPassword, avatarUrl });
+    
+    const newUser = await User.create({ ...req.body, password: hashPassword});
     
     const signUpUser = await User.findOne({ email });
     const payload = {
@@ -32,7 +31,6 @@ const register = async (req, res) => {
               id: signUpUser.id,
               name: newUser.name,
               email: newUser.email,
-              avatarUrl
         }
     })
     
@@ -104,10 +102,35 @@ const updateAvatar = async (req, res) => {
     
 }
 
+const updateCurrent = async (req, res) => {
+    const { file, user } = req;    
+// ==========================================save local in project==================== 
+//     if (file) {
+//    user.avatarUrl =  await ImageService.save(file, {width:300, height: 300}, 'avatars', 'users',   user.id )
+//         }
+// ====================================================================================
+    // ===========================Cloudinary============================
+  if (!file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+    user.avatarUrl = req.file.path
+    // =====================================================================
+    
+    Object.keys(req.body).forEach((key) => {
+         user[key] = req.body[key]
+    })
+    const updateUser = await user.save();
+
+    res.status(200).json({
+        user: updateUser,
+    })
+}
+
 module.exports = {
     register: ctrlWrapper(register),
     login: ctrlWrapper(login),
     currentUser: ctrlWrapper(currentUser),
     logout: ctrlWrapper(logout),
-    updateAvatar: ctrlWrapper(updateAvatar)
+    updateAvatar: ctrlWrapper(updateAvatar),
+    updateCurrent: ctrlWrapper(updateCurrent)
 }

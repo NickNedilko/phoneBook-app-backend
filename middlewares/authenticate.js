@@ -9,7 +9,7 @@ const authenticate = async (req, res, next) => {
     }
 try {
     const {payload} = verifyToken(token);
-    const user = await User.findById(payload.id);
+    const user = await User.findById(payload.id).select(-'password');
     if (!user || !user.token || user.token !== token) {
         next(HttpError(401, "User not found"))
     }

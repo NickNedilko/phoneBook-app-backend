@@ -1,4 +1,5 @@
 const { Schema, model } = require('mongoose');
+const crypto = require('crypto');
 const { handleMongooseError } = require('../helpers');
 const Joi = require('joi');
 
@@ -22,7 +23,6 @@ const userSchema = new Schema({
     },
     avatarUrl: {
         type: String, 
-        required: true
     },
 
     token: {
@@ -30,6 +30,15 @@ const userSchema = new Schema({
         default: ""
     }
 }, { versionKey: false, timestamps: true })
+
+
+userSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        const emailHash = crypto.createHash('md5').update(this.email).digest('hex');
+        this.avatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=monsterid`
+    }
+    next();
+})
 
 userSchema.post('save', handleMongooseError)
 
