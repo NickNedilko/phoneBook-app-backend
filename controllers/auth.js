@@ -1,23 +1,23 @@
-const bcrypt = require('bcrypt');
+
 const path = require('path');
-const fs = require('fs/promises')
+const crypto = require('crypto');
+
 const { User } = require('../models/user');
 
 const { HttpError, ctrlWrapper, createToken } = require('../helpers');
-const ImageService = require('../services/imageService');
+// const ImageService = require('../services/imageService');
 
 
-const avatarsDir = path.join(__dirname, '../', 'public', 'avatars' )
+
 
 const register = async (req, res) => {
-    const { email, password } = req.body;
+    const {email} = req.body;
     const user = await User.findOne({ email });
     if (user) {
         throw HttpError(409, "email is already in use")
     }
-    const hashPassword = await bcrypt.hash(password, 10);
     
-    const newUser = await User.create({ ...req.body, password: hashPassword});
+    const newUser = await User.create({ ...req.body});
     
     const signUpUser = await User.findOne({ email });
     const payload = {
@@ -43,7 +43,8 @@ const login = async (req, res) => {
     if (!user) {
         throw HttpError(401, "Email or password is invalid")
     }
-    const passwordCompare = await bcrypt.compare(password, user.password);
+    const passwordCompare = await user.checkPassword(password, user.password)
+   
     if (!passwordCompare) {
        throw HttpError(401, "Email or password is invalid") 
     }
@@ -67,16 +68,6 @@ const login = async (req, res) => {
 
 } 
 
-const currentUser = async (req, res) => {
-    const {email, name, avatarUrl, id} = req.user;
-
-    res.json({
-        id,
-        name, 
-        email,
-        avatarUrl
-    })
-}
 
 const logout = async (req, res) => {
     const { _id } = req.user;
@@ -86,51 +77,56 @@ const logout = async (req, res) => {
     })
 }
 
-  
-const updateAvatar = async (req, res) => {
-    const {_id} = req.user
-    const { path: tempUpload, originalname } = req.file;
-    const filename = `${_id}_${originalname}`
-    const resultUpload = path.join(avatarsDir, filename);
-    await fs.rename(tempUpload, resultUpload);
-    const avatarUrl = path.join('avatars', filename);
-    await User.findByIdAndUpdate(_id, { avatarUrl });
+const fogotPassword = async (req, res, next) => {
+    const { email } = req.body;
 
-    res.json({
-        avatarUrl
+    const user = await User.findOne({ email });
+
+    if (!user) return res.status(200).json({
+        msg: "Password reset instruction sent to email"
     })
+
+    const otp = user.createPasswordResetToken();
+
+    await user.save();
+
+    const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${otp}`
+
+    console.log(resetUrl);
     
+    res.status(200).json({
+        msg: "Password reset instruction sent to email"
+    })
 }
 
-const updateCurrent = async (req, res) => {
-    const { file, user } = req;    
-// ==========================================save local in project==================== 
-//     if (file) {
-//    user.avatarUrl =  await ImageService.save(file, {width:300, height: 300}, 'avatars', 'users',   user.id )
-//         }
-// ====================================================================================
-    // ===========================Cloudinary============================
-  if (!file) {
-    return res.status(400).json({ error: "No file uploaded" });
-  }
-    user.avatarUrl = req.file.path
-    // =====================================================================
-    
-    Object.keys(req.body).forEach((key) => {
-         user[key] = req.body[key]
+const resetPassword = async (req, res, next) => {
+    const hashedToken = crypto.createHash('sha256').update(req.params.otp).digest('hex');
+
+    const user = await User.findOne({
+        passwordResetToken: hashedToken,
+    passwordResetExpires: {$gt: Date.now()}    
     })
-    const updateUser = await user.save();
+    
+    if (!user) return next(HttpError(400, 'Token is invalid'));
+
+    user.password = req.body.password;
+    user.passwordResetToken = '';
+    user.passwordResetExpires = '';
+
+    await user.save();
+
+    user.password = undefined;
 
     res.status(200).json({
-        user: updateUser,
+        user
     })
 }
 
 module.exports = {
     register: ctrlWrapper(register),
     login: ctrlWrapper(login),
-    currentUser: ctrlWrapper(currentUser),
     logout: ctrlWrapper(logout),
-    updateAvatar: ctrlWrapper(updateAvatar),
-    updateCurrent: ctrlWrapper(updateCurrent)
+    forgotPassword: ctrlWrapper(fogotPassword),
+    resetPassword: ctrlWrapper(resetPassword),
+
 }
