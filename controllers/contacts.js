@@ -60,6 +60,24 @@ const updateName = async (req, res) => {
     });
 }
 
+const updatePhoto = async(req, res) =>{
+   const {id} = req.params;
+  
+   const contact = await Contact.findById(id);
+
+   if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+    contact.avatar = req.file.path;
+
+    await contact.save();
+
+
+    res.status(200).json({
+  msg: 'Upload photo success' 
+    })
+}
+
 
 module.exports = {
     getAll: ctrlWrapper(getAll),
@@ -67,7 +85,8 @@ module.exports = {
     getById: ctrlWrapper(getById),
     updateById: ctrlWrapper(updateById),
     deleteById: ctrlWrapper(deleteById),
-    updateName: ctrlWrapper(updateName)
+    updateName: ctrlWrapper(updateName),
+    updatePhoto: ctrlWrapper(updatePhoto)
 }
 
 

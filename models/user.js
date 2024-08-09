@@ -27,6 +27,11 @@ const userSchema = new Schema({
         type: String, 
     },
 
+    phone:{
+        type: String,
+        default: '99999999'
+    },
+
     passwordResetToken: String,
     passwordResetExpires: Date,
 

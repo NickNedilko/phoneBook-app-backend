@@ -1,9 +1,9 @@
 
-const path = require('path');
+// const path = require('path');
 const crypto = require('crypto');
-
+// const nodemailer = require('nodemailer')
 const { User } = require('../models/user');
-
+const Email = require('../services/emailService')
 const { HttpError, ctrlWrapper, createToken } = require('../helpers');
 // const ImageService = require('../services/imageService');
 
@@ -25,6 +25,14 @@ const register = async (req, res) => {
     }
     const token = createToken(payload);
     await User.findByIdAndUpdate(signUpUser.id, {token});
+
+// send greetings
+try {
+    await  new Email(newUser, 'https://phone-book-app-flax.vercel.app/').sendHello();
+} catch (error) {
+    console.log(error)
+}
+
     res.status(201).json({
         token,
         user: {
@@ -79,7 +87,7 @@ const logout = async (req, res) => {
 
 const fogotPassword = async (req, res, next) => {
     const { email } = req.body;
-
+   
     const user = await User.findOne({ email });
 
     if (!user) return res.status(200).json({
@@ -90,13 +98,50 @@ const fogotPassword = async (req, res, next) => {
 
     await user.save();
 
-    const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${otp}`
-
-    console.log(resetUrl);
+    // const emailTransport = nodemailer.createTransport({
+    //     service: "Gmail", 
+    //     auth: {
+    //         user: process.env.USER_EMAIL,
+    //         pass: process.env.USER_PASSWORD
+    //     }
+    // })
+//  const emailTransport = nodemailer.createTransport({
+//   host: "sandbox.smtp.mailtrap.io",
+//   port: 2525,
+//   auth: {
+//     user: "3a3bc08a73eba0",
+//     pass: "d0a36fbabf917d"
+//   }
+// });
     
+    try {
+        const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${otp}`
+    await new Email(user, resetUrl).sendRestorePassword();
+
+    } catch (error) {
+
+        user.passwordResetToken = '';
+        user.passwordResetExpires = '';
+
+        await user.save();
+    }
+
     res.status(200).json({
         msg: "Password reset instruction sent to email"
     })
+    // const emailConfig = {
+    //     from: 'PhoneBook app',
+    //     to: user.email,
+    //     subject: 'Password reset',
+    //     text: resetUrl
+    // }
+
+    
+    // await emailTransport.sendMail(emailConfig);
+
+
+    
+ 
 }
 
 const resetPassword = async (req, res, next) => {

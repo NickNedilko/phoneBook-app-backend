@@ -18,13 +18,13 @@ const contactSchema = new Schema({
     email:  {
         type: String, 
         required: true,
-         unique: true,
+        //  unique: true,
         match: emailRegex
     },
     phone:  {
         type: String, 
         required: true,
-             unique: true,
+            //  unique: true,
             match: phoneRegex
     },
     owner: {

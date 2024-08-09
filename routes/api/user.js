@@ -15,7 +15,7 @@ router.patch('/current', authenticate, uploadMiddleware('users').single('avatar'
 
 router.patch('/update-password', authenticate, checkMyPassword, ctrl.updatePassword)
 
-router.patch('/avatars', authenticate, ctrl.updateAvatar);
+router.patch('/avatar', authenticate, uploadMiddleware('users').single('avatar'), ctrl.updateAvatar);
 
 
 module.exports = router;
