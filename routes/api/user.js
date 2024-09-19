@@ -11,7 +11,7 @@ const router = express.Router();
 // save to cloudinary uploadMiddleware('users').single('avatar')
 router.get('/current', authenticate, ctrl.currentUser);
 
-router.patch('/current', authenticate, uploadMiddleware('users').single('avatar'), ctrl.updateCurrent);
+router.patch('/update-current', authenticate, ctrl.updateCurrent);
 
 router.patch('/update-password', authenticate, checkMyPassword, ctrl.updatePassword)
 

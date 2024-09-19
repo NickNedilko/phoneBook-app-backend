@@ -31,11 +31,18 @@ const updateAvatar = async (req, res) => {
     // await fs.rename(tempUpload, resultUpload);
     // const avatarUrl = path.join('avatars', filename);
     // await User.findByIdAndUpdate(_id, { avatarUrl });
-
+// ==========================================save local in project==================== 
+//     if (file) {
+//    user.avatarUrl =  await ImageService.save(file, {width:300, height: 300}, 'avatars', 'users',   user.id )
+//         }
+// ====================================================================================
+    // ===========================Cloudinary============================
     if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
-        user.avatarUrl = req.file.path;
+        user.avatarUrl = req.file.path
+        // =====================================================================
+   
 
         await user.save();
 
@@ -46,18 +53,8 @@ const updateAvatar = async (req, res) => {
 }
 
 const updateCurrent = async (req, res) => {
-    const { file, user } = req;    
-// ==========================================save local in project==================== 
-//     if (file) {
-//    user.avatarUrl =  await ImageService.save(file, {width:300, height: 300}, 'avatars', 'users',   user.id )
-//         }
-// ====================================================================================
-    // ===========================Cloudinary============================
-  if (!file) {
-    return res.status(400).json({ error: "No file uploaded" });
-  }
-    user.avatarUrl = req.file.path
-    // =====================================================================
+    const {  user } = req;    
+
     
     Object.keys(req.body).forEach((key) => {
          user[key] = req.body[key]
